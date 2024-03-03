@@ -1,6 +1,9 @@
 package com.jbm.video.ui.screen.video
 
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,27 +16,28 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
+import com.jbm.module.core.model.VideoPlaybackState
 import com.jbm.video.R
 
 @Composable
@@ -50,13 +54,13 @@ fun VideoDestination(
 
     when (val data = uiState.value) {
         is VideoUiState.Success -> {
-            val playingIndex = rememberSaveable { mutableIntStateOf(1) }
 
             VideoScreen(
-                videoState = data,
-                playingIndex = playingIndex,
-                onVideoChange = {},
+                videoPlaylist = data.videoList,
+                playingIndex = data.videoList.find { it.playbackState == VideoPlaybackState.Playing }?.id,
+                onPlayingVideoIdChange = viewModel::onPlayingVideoIdChange,
                 isVideoEnded = {},
+                onVideoItemClicked = viewModel::onPlayingVideoIdChange,
                 onVideoDownloadClick = viewModel::downloadVideo
             )
         }
@@ -70,70 +74,111 @@ fun VideoDestination(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun VideoScreen(
-    videoState: VideoUiState.Success,
-    playingIndex: State<Int>,
-    onVideoChange: (Int) -> Unit,
+    videoPlaylist: List<VideoDomain>,
+    playingIndex: String?,
+    onPlayingVideoIdChange: (String) -> Unit,
     isVideoEnded: (Boolean) -> Unit,
-    onVideoDownloadClick: (com.jbm.module.core.model.VideoDomain) -> Unit
+    onVideoItemClicked: (String) -> Unit,
+    onVideoDownloadClick: (VideoDomain) -> Unit
 ) {
-    val currentVideo = remember { mutableStateOf(videoState.videoList.random()) }
+    val videoPlaylistState by remember { mutableStateOf(videoPlaylist) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
     ) {
         VideoPlayer(
-            video = currentVideo,
-            playingIndex = playingIndex,
-            onVideoChange = onVideoChange,
+            videoPlaylist = videoPlaylistState,
+            playingVideoId = playingIndex,
+            onPlayingVideoIdChange = onPlayingVideoIdChange,
             isVideoEnded = isVideoEnded
         )
+        VideoPlaylist(
+            videoPlaylist = videoPlaylist,
+            onVideoItemClicked = onVideoItemClicked,
+            onVideoDownloadClick = onVideoDownloadClick
+        )
+    }
+}
 
-        LazyColumn {
-            items(videoState.videoList) { video ->
-
-                Row(
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun VideoPlaylist(
+    videoPlaylist: List<VideoDomain>,
+    onVideoItemClicked: (String) -> Unit,
+    onVideoDownloadClick: (VideoDomain) -> Unit
+) {
+    LazyColumn {
+        items(videoPlaylist) { video ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = video.name)
-                    Button(onClick = { onVideoDownloadClick(video) }) {
-                        when (video.cacheState) {
-                            com.jbm.module.core.model.VideoCacheState.Cached -> {
-                                Icon(
-                                    imageVector = Icons.Rounded.Favorite,
-                                    contentDescription = stringResource(
-                                        id = R.string.video_download_content_desc,
-                                    ),
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                )
-                            }
-
-                            com.jbm.module.core.model.VideoCacheState.NotCached -> {
-                                Icon(
-                                    imageVector = Icons.Rounded.FavoriteBorder,
-                                    contentDescription = stringResource(
-                                        id = R.string.video_download_content_desc,
-                                    ),
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                )
-                            }
-
-                            com.jbm.module.core.model.VideoCacheState.Caching -> {
-                                CircularProgressIndicator(
-                                    modifier = Modifier
-                                        .width(24.dp)
-                                        .align(alignment = Alignment.CenterVertically),
-                                    color = Color.Black,
-                                )
-                            }
-                        }
-                    }
-                }
+                        .basicMarquee()
+                        .clickable {
+                            onVideoItemClicked(video.id)
+                        },
+                    fontWeight = if (video.playbackState == VideoPlaybackState.Playing) {
+                        FontWeight.Bold
+                    } else {
+                        FontWeight.Normal
+                    },
+                    text = video.name
+                )
+                DownloadIcon(
+                    video = video,
+                    onVideoDownloadClick = onVideoDownloadClick
+                )
             }
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = Color.LightGray
+            )
+        }
+    }
+}
+
+@Composable
+fun DownloadIcon(
+    video: VideoDomain,
+    onVideoDownloadClick: (VideoDomain) -> Unit
+) {
+    when (video.cacheState) {
+        VideoCacheState.Cached -> {
+            IconButton(onClick = { onVideoDownloadClick(video) }) {
+                Icon(
+                    imageVector = Icons.Rounded.Favorite,
+                    contentDescription = stringResource(
+                        id = R.string.video_download_content_desc,
+                    ),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+
+        VideoCacheState.NotCached -> {
+            IconButton(onClick = { onVideoDownloadClick(video) }) {
+                Icon(
+                    imageVector = Icons.Rounded.FavoriteBorder,
+                    contentDescription = stringResource(
+                        id = R.string.video_download_content_desc,
+                    ),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+
+        VideoCacheState.Caching -> {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .width(24.dp),
+                color = Color.Black,
+            )
         }
     }
 }

@@ -9,8 +9,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,7 +28,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
 import dagger.hilt.EntryPoints
 
@@ -56,9 +53,9 @@ import dagger.hilt.EntryPoints
 @Composable
 fun VideoPlayer(
     modifier: Modifier = Modifier,
-    video: State<VideoDomain>,
-    playingIndex: State<Int>,
-    onVideoChange: (Int) -> Unit,
+    videoPlaylist: List<VideoDomain>,
+    playingVideoId: String?,
+    onPlayingVideoIdChange: (String) -> Unit,
     isVideoEnded: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
@@ -67,64 +64,57 @@ fun VideoPlayer(
         com.jbm.module.core.video.di.VideoPlayerEntryPoint::class.java
     ).getCacheDataSource()
 
-    val isTitleVisible = remember { mutableStateOf(true) }
-    val videoTitle = remember { mutableStateOf(video.value.name) }
-    val isVideoCached =
-        remember { mutableStateOf(video.value.cacheState == VideoCacheState.Cached) }
-
     // Create a list of MediaItems for the ExoPlayer
     val mediaItems = arrayListOf<MediaItem>()
-    mediaItems.add(
-        MediaItem.Builder()
-            .setUri(video.value.videoUrl)
-            .setMediaId(video.value.id)
-            .setTag(video)
-            .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(video.value.name).build())
-            .build()
-    )
+    videoPlaylist.forEach { video ->
+        mediaItems.add(
+            MediaItem.Builder()
+                .setUri(video.videoUrl)
+                .setMediaId(video.id)
+                .setTag(video)
+                .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(video.name).build())
+                .build()
+        )
+    }
 
     // Initialize ExoPlayer
     val exoPlayer = remember {
-        if (isVideoCached.value) {
-            ExoPlayer.Builder(context)
-                .setMediaSourceFactory(
-                    DefaultMediaSourceFactory(context).setDataSourceFactory(cacheDataSourceFactory)
-                )
-                .build()
-        } else {
-            ExoPlayer.Builder(context).build()
-        }.apply {
-            setMediaItems(mediaItems)
-            prepare()
-            addListener(object : Player.Listener {
-                override fun onEvents(player: Player, events: Player.Events) {
-                    super.onEvents(player, events)
-                    // Hide video title after playing for 200 milliseconds
-                    if (player.contentPosition >= 200) isTitleVisible.value = false
-                }
-
-                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                    super.onMediaItemTransition(mediaItem, reason)
-                    // Callback when the video changes
-                    onVideoChange(this@apply.currentPeriodIndex)
-                    isTitleVisible.value = true
-                    videoTitle.value = mediaItem?.mediaMetadata?.displayTitle.toString()
-                }
-
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    super.onPlaybackStateChanged(playbackState)
-                    // Callback when the video playback state changes to STATE_ENDED
-                    if (playbackState == ExoPlayer.STATE_ENDED) {
-                        isVideoEnded.invoke(true)
+        ExoPlayer.Builder(context)
+            .setMediaSourceFactory(
+                DefaultMediaSourceFactory(context).setDataSourceFactory(cacheDataSourceFactory)
+            )
+            .build()
+            .apply {
+                setMediaItems(mediaItems)
+                prepare()
+                addListener(object : Player.Listener {
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        super.onMediaItemTransition(mediaItem, reason)
+                        // Callback when the video changes
+                        this@apply.currentMediaItem?.mediaId?.let(onPlayingVideoIdChange)
                     }
-                }
-            })
-        }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        super.onPlaybackStateChanged(playbackState)
+                        // Callback when the video playback state changes to STATE_ENDED
+                        when (playbackState) {
+                            ExoPlayer.STATE_ENDED -> {
+                                isVideoEnded.invoke(true)
+                            }
+
+                            else -> {}
+                        }
+                    }
+                })
+            }
     }
 
-    // Seek to the specified index and start playing
-    exoPlayer.seekTo(playingIndex.value, C.TIME_UNSET)
-    exoPlayer.playWhenReady = false
+    // Seek to the specified video and start playing
+    playingVideoId?.let { videoIdToPlay ->
+        val index = mediaItems.indexOf(mediaItems.firstOrNull { it.mediaId == videoIdToPlay })
+        exoPlayer.seekTo(index, C.TIME_UNSET)
+    }
+    exoPlayer.playWhenReady = true
 
     // Add a lifecycle observer to manage player state based on lifecycle events
     LocalLifecycleOwner.current.lifecycle.addObserver(object : LifecycleEventObserver {

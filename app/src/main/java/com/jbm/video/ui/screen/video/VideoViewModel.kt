@@ -7,12 +7,11 @@ import com.jbm.module.core.data.repository.VideoRepository
 import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
 import com.jbm.module.core.model.VideoDownloadState
+import com.jbm.module.core.model.VideoPlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
@@ -39,19 +38,16 @@ class VideoViewModel @Inject constructor(
             }
     }
 
-    /**
-     * Get the video from repository for given ID
-     *
-     * @param: ID of the video to be found
-     */
-    fun getVideoById(id: String) = viewModelScope.launch {
-        videoRepository.getVideoById(id)
-            .onSuccess { video ->
-                //_uiState.update { VideoUiState.Success(video) }
+    fun onPlayingVideoIdChange(videoId: String) {
+        (uiState.value as? VideoUiState.Success)?.videoList?.map {
+            if (it.id == videoId) {
+                it.copy(playbackState = VideoPlaybackState.Playing)
+            } else {
+                it.copy(playbackState = VideoPlaybackState.Idle)
             }
-            .onFailure {
-                Log.d("coucou", "Video $id Not Found: ")
-            }
+        }?.let {
+            updateUiState(VideoUiState.Success(it))
+        }
     }
 
     /**

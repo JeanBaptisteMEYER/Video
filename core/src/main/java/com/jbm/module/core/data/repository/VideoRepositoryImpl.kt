@@ -23,6 +23,7 @@ import com.jbm.module.core.model.EXAMPLE_VIDEO_URI
 import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
 import com.jbm.module.core.model.VideoDownloadState
+import com.jbm.module.core.model.VideoPlaybackState
 import com.jbm.module.core.video.VideoDownloadService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
@@ -67,6 +68,7 @@ class VideoRepositoryImpl @Inject constructor(
                     id = (index + 1).toString(),
                     name = video.title,
                     videoUrl = video.videoUrl.first(),
+                    playbackState = if (index == 0) VideoPlaybackState.Playing else VideoPlaybackState.Idle,
                     cacheState = VideoCacheState.NotCached
                 )
             }
@@ -90,6 +92,7 @@ class VideoRepositoryImpl @Inject constructor(
                 id = "1",
                 name = "Video Name",
                 videoUrl = EXAMPLE_VIDEO_URI,
+                playbackState = VideoPlaybackState.Idle,
                 cacheState = VideoCacheState.NotCached
             )
         )
@@ -257,6 +260,7 @@ class VideoRepositoryImpl @Inject constructor(
                         id = jsonObject.getString("id"),
                         name = jsonObject.getString("title"),
                         videoUrl = uri.toString(),
+                        playbackState = VideoPlaybackState.Idle,
                         cacheState = VideoCacheState.Cached
                     )
                 )

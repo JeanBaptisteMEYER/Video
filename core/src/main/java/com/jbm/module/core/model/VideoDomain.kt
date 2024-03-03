@@ -7,8 +7,14 @@ data class VideoDomain(
     val id: String,
     val name: String,
     val videoUrl: String,
+    val playbackState: VideoPlaybackState,
     val cacheState: VideoCacheState
 )
+
+sealed interface VideoPlaybackState {
+    data object Playing : VideoPlaybackState
+    data object Idle : VideoPlaybackState
+}
 
 sealed interface VideoCacheState {
     data object Cached : VideoCacheState
