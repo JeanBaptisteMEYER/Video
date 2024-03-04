@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.compose.uiToolingPreview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.constrainLayout)
     implementation(libs.androidx.lifecycle.runtimeCompose)
     compileOnly(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.compose.ui.tooling)

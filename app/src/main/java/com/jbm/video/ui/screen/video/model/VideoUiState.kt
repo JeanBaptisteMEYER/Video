@@ -1,4 +1,4 @@
-package com.jbm.video.ui.screen.video
+package com.jbm.video.ui.screen.video.model
 
 import com.jbm.module.core.model.VideoDomain
 

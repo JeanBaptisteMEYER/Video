@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,8 +28,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import com.jbm.module.core.model.VideoDomain
+import com.jbm.video.CustomExoPlayerView
 import dagger.hilt.EntryPoints
 
 /**
@@ -47,15 +48,16 @@ import dagger.hilt.EntryPoints
  *
  * @ExperimentalAnimationApi annotation is used for the experimental Animation API usage.
  */
+
 @OptIn(UnstableApi::class)
 @SuppressLint("OpaqueUnitKey")
 @ExperimentalAnimationApi
 @Composable
 fun VideoPlayer(
     modifier: Modifier = Modifier,
-    videoPlaylist: List<VideoDomain>,
-    playingVideoId: String?,
-    onPlayingVideoIdChange: (String) -> Unit,
+    videoPlaylist: State<List<VideoDomain>>,
+    playingVideoIndex: State<Int>,
+    onPlayingVideoIndexChange: (Int) -> Unit,
     isVideoEnded: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
@@ -66,13 +68,17 @@ fun VideoPlayer(
 
     // Create a list of MediaItems for the ExoPlayer
     val mediaItems = arrayListOf<MediaItem>()
-    videoPlaylist.forEach { video ->
+    videoPlaylist.value.forEach { video ->
         mediaItems.add(
             MediaItem.Builder()
                 .setUri(video.videoUrl)
                 .setMediaId(video.id)
                 .setTag(video)
-                .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(video.name).build())
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setDisplayTitle(video.name)
+                        .build()
+                )
                 .build()
         )
     }
@@ -91,7 +97,7 @@ fun VideoPlayer(
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                         super.onMediaItemTransition(mediaItem, reason)
                         // Callback when the video changes
-                        this@apply.currentMediaItem?.mediaId?.let(onPlayingVideoIdChange)
+                        this@apply.currentMediaItemIndex.let(onPlayingVideoIndexChange)
                     }
 
                     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -109,11 +115,7 @@ fun VideoPlayer(
             }
     }
 
-    // Seek to the specified video and start playing
-    playingVideoId?.let { videoIdToPlay ->
-        val index = mediaItems.indexOf(mediaItems.firstOrNull { it.mediaId == videoIdToPlay })
-        exoPlayer.seekTo(index, C.TIME_UNSET)
-    }
+    exoPlayer.seekTo(playingVideoIndex.value, C.TIME_UNSET)
     exoPlayer.playWhenReady = true
 
     // Add a lifecycle observer to manage player state based on lifecycle events
@@ -148,7 +150,7 @@ fun VideoPlayer(
                     .testTag("VIDEO_PLAYER_TAG"),
                 factory = {
                     // AndroidView to embed a PlayerView into Compose
-                    PlayerView(context).apply {
+                    CustomExoPlayerView(context).apply {
                         player = exoPlayer
                         layoutParams = FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,

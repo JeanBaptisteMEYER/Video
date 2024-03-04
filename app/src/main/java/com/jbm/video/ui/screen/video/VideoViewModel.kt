@@ -7,13 +7,11 @@ import com.jbm.module.core.data.repository.VideoRepository
 import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
 import com.jbm.module.core.model.VideoDownloadState
-import com.jbm.module.core.model.VideoPlaybackState
+import com.jbm.video.ui.screen.video.model.VideoUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -38,71 +36,70 @@ class VideoViewModel @Inject constructor(
             }
     }
 
-    fun onPlayingVideoIdChange(videoId: String) {
-        (uiState.value as? VideoUiState.Success)?.videoList?.map {
-            if (it.id == videoId) {
-                it.copy(playbackState = VideoPlaybackState.Playing)
-            } else {
-                it.copy(playbackState = VideoPlaybackState.Idle)
-            }
-        }?.let {
-            updateUiState(VideoUiState.Success(it))
-        }
-    }
-
     /**
      * Download a given Video. The Video will be store in app files and made accessible offline
      *
      * @param: VideoDomain to be download
      */
-    fun downloadVideo(video: VideoDomain) {
+    fun onVideoDownloadClick(video: VideoDomain) {
         viewModelScope.launch {
-            if (video.cacheState is VideoCacheState.Cached) {
-                videoRepository.deleteDownloadedVideoById(video.id)
-                    .cancellable()
-                    .collect { videoDownloadState ->
-                        when(videoDownloadState) {
-                            is VideoDownloadState.Removing -> {
-                                (uiState.value as? VideoUiState.Success)?.videoList?.map {
-                                    if (it.id == videoDownloadState.videoId) it.copy(cacheState = VideoCacheState.NotCached) else it
-                                }?.let {
-                                    updateUiState(VideoUiState.Success(it))
+            videoRepository.downloadVideo(video = video)
+                .collect { videoDownloadState ->
+                    when (videoDownloadState) {
+                        is VideoDownloadState.Downloading -> {
+                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
+                                if (it.id == videoDownloadState.videoId) {
+                                    it.copy(cacheState = VideoCacheState.Caching)
+                                } else {
+                                    it
                                 }
-                                coroutineContext.job.cancel()
+                            }?.let {
+                                updateUiState(VideoUiState.Success(it))
                             }
-                            else -> {}
                         }
-                    }
-            } else {
-                videoRepository.downloadVideo(video = video)
-                    .cancellable()
-                    .collect { videoDownloadState ->
-                        when (videoDownloadState) {
-                            is VideoDownloadState.Downloading -> {
-                                (uiState.value as? VideoUiState.Success)?.videoList?.map {
-                                    if (it.id == videoDownloadState.videoId) {
-                                        it.copy(cacheState = VideoCacheState.Caching)
-                                    } else {
-                                        it
-                                    }
-                                }?.let {
-                                    updateUiState(VideoUiState.Success(it))
-                                }
-                            }
 
-                            is VideoDownloadState.Completed -> {
-                                (uiState.value as? VideoUiState.Success)?.videoList?.map {
-                                    if (it.id == videoDownloadState.videoId) it.copy(cacheState = VideoCacheState.Cached) else it
-                                }?.let {
-                                    updateUiState(VideoUiState.Success(it))
+                        is VideoDownloadState.Queued -> {
+                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
+                                if (it.id == videoDownloadState.videoId) {
+                                    it.copy(cacheState = VideoCacheState.Caching)
+                                } else {
+                                    it
                                 }
-                                coroutineContext.job.cancel()
+                            }?.let {
+                                updateUiState(VideoUiState.Success(it))
                             }
-
-                            else -> {}
                         }
+
+                        is VideoDownloadState.Completed -> {
+                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
+                                if (it.id == videoDownloadState.videoId) it.copy(cacheState = VideoCacheState.Cached) else it
+                            }?.let {
+                                updateUiState(VideoUiState.Success(it))
+                            }
+                        }
+
+                        else -> {}
                     }
-            }
+                }
+        }
+    }
+
+    fun onVideoDeleteClick(videoId: String) {
+        viewModelScope.launch {
+            videoRepository.deleteDownloadedVideoById(videoId)
+                .collect { videoDownloadState ->
+                    when (videoDownloadState) {
+                        is VideoDownloadState.Removing -> {
+                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
+                                if (it.id == videoDownloadState.videoId) it.copy(cacheState = VideoCacheState.NotCached) else it
+                            }?.let {
+                                updateUiState(VideoUiState.Success(it))
+                            }
+                        }
+
+                        else -> {}
+                    }
+                }
         }
     }
 

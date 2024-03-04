@@ -23,7 +23,6 @@ import com.jbm.module.core.model.EXAMPLE_VIDEO_URI
 import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
 import com.jbm.module.core.model.VideoDownloadState
-import com.jbm.module.core.model.VideoPlaybackState
 import com.jbm.module.core.video.VideoDownloadService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
@@ -68,7 +67,6 @@ class VideoRepositoryImpl @Inject constructor(
                     id = (index + 1).toString(),
                     name = video.title,
                     videoUrl = video.videoUrl.first(),
-                    playbackState = if (index == 0) VideoPlaybackState.Playing else VideoPlaybackState.Idle,
                     cacheState = VideoCacheState.NotCached
                 )
             }
@@ -92,7 +90,6 @@ class VideoRepositoryImpl @Inject constructor(
                 id = "1",
                 name = "Video Name",
                 videoUrl = EXAMPLE_VIDEO_URI,
-                playbackState = VideoPlaybackState.Idle,
                 cacheState = VideoCacheState.NotCached
             )
         )
@@ -150,33 +147,32 @@ class VideoRepositoryImpl @Inject constructor(
                     ) {
                         super.onDownloadChanged(downloadManager, download, finalException)
                         when (download.state) {
-
                             Download.STATE_COMPLETED -> {
-                                trySend(VideoDownloadState.Completed(video.id))
+                                trySend(VideoDownloadState.Completed(download.request.id))
                             }
 
                             Download.STATE_DOWNLOADING -> {
-                                trySend(VideoDownloadState.Downloading(video.id))
+                                trySend(VideoDownloadState.Downloading(download.request.id))
                             }
 
                             Download.STATE_FAILED -> {
-                                trySend(VideoDownloadState.Failed(video.id))
+                                trySend(VideoDownloadState.Failed(download.request.id))
                             }
 
                             Download.STATE_QUEUED -> {
-                                trySend(VideoDownloadState.Queued(video.id))
+                                trySend(VideoDownloadState.Queued(download.request.id))
                             }
 
                             Download.STATE_REMOVING -> {
-                                trySend(VideoDownloadState.Removing(video.id))
+                                trySend(VideoDownloadState.Removing(download.request.id))
                             }
 
                             Download.STATE_RESTARTING -> {
-                                trySend(VideoDownloadState.Downloading(video.id))
+                                trySend(VideoDownloadState.Downloading(download.request.id))
                             }
 
                             Download.STATE_STOPPED -> {
-                                trySend(VideoDownloadState.Stopped(video.id))
+                                trySend(VideoDownloadState.Stopped(download.request.id))
                             }
                         }
                     }
@@ -207,33 +203,32 @@ class VideoRepositoryImpl @Inject constructor(
                     ) {
                         super.onDownloadChanged(downloadManager, download, finalException)
                         when (download.state) {
-
                             Download.STATE_COMPLETED -> {
-                                trySend(VideoDownloadState.Completed(videoId))
+                                trySend(VideoDownloadState.Completed(download.request.id))
                             }
 
                             Download.STATE_DOWNLOADING -> {
-                                trySend(VideoDownloadState.Downloading(videoId))
+                                trySend(VideoDownloadState.Downloading(download.request.id))
                             }
 
                             Download.STATE_FAILED -> {
-                                trySend(VideoDownloadState.Failed(videoId))
+                                trySend(VideoDownloadState.Failed(download.request.id))
                             }
 
                             Download.STATE_QUEUED -> {
-                                trySend(VideoDownloadState.Queued(videoId))
+                                trySend(VideoDownloadState.Queued(download.request.id))
                             }
 
                             Download.STATE_REMOVING -> {
-                                trySend(VideoDownloadState.Removing(videoId))
+                                trySend(VideoDownloadState.Removing(download.request.id))
                             }
 
                             Download.STATE_RESTARTING -> {
-                                trySend(VideoDownloadState.Downloading(videoId))
+                                trySend(VideoDownloadState.Downloading(download.request.id))
                             }
 
                             Download.STATE_STOPPED -> {
-                                trySend(VideoDownloadState.Stopped(videoId))
+                                trySend(VideoDownloadState.Stopped(download.request.id))
                             }
                         }
                     }
@@ -260,7 +255,6 @@ class VideoRepositoryImpl @Inject constructor(
                         id = jsonObject.getString("id"),
                         name = jsonObject.getString("title"),
                         videoUrl = uri.toString(),
-                        playbackState = VideoPlaybackState.Idle,
                         cacheState = VideoCacheState.Cached
                     )
                 )
