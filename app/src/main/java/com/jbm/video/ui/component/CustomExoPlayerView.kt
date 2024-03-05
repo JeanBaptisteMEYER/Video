@@ -1,4 +1,4 @@
-package com.jbm.video
+package com.jbm.video.ui.component
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -49,12 +49,12 @@ class CustomExoPlayerView @JvmOverloads constructor(
                     ): Boolean {
                         return when {
                             distanceY > 10 -> {
-                                handleFullScreen(true)
+                                enterFullScreen()
                                 true
                             }
 
                             distanceY < -10 -> {
-                                handleFullScreen(false)
+                                exitFullScreen()
                                 true
                             }
 
@@ -84,22 +84,26 @@ class CustomExoPlayerView @JvmOverloads constructor(
         })
     }
 
-    fun handleFullScreen(isFullScreen: Boolean) {
-        if (isFullScreen) {
-            (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            val params = layoutParams
-            params.width = ViewGroup.LayoutParams.MATCH_PARENT
-            params.height = ViewGroup.LayoutParams.MATCH_PARENT
-            layoutParams = params
-        } else {
-            (context as? Activity)?.requestedOrientation =
-                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            val params = layoutParams
-            params.width = ViewGroup.LayoutParams.MATCH_PARENT
-            params.height =
-                (200 * context.applicationContext.resources.displayMetrics.density).toInt()
-            layoutParams = params
-        }
+    private fun enterFullScreen() {
+        (context as? Activity)?.window?.decorView?.systemUiVisibility =
+            (View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
+        (context as? Activity)?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        val params = layoutParams
+        params.width = ViewGroup.LayoutParams.MATCH_PARENT
+        params.height = ViewGroup.LayoutParams.MATCH_PARENT
+        layoutParams = params
+    }
+
+    private fun exitFullScreen() {
+        (context as? Activity)?.window?.decorView?.systemUiVisibility =
+            View.SYSTEM_UI_FLAG_VISIBLE
+        (context as? Activity)?.requestedOrientation =
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        val params = layoutParams
+        params.width = ViewGroup.LayoutParams.MATCH_PARENT
+        params.height =
+            (200 * context.applicationContext.resources.displayMetrics.density).toInt()
+        layoutParams = params
     }
 
     private fun shouldForward(posX: Float): Boolean? {

@@ -6,6 +6,7 @@ androidxWork = "2.9.0"
 androidxActivity = "1.8.2"
 androidxComposeUi = "1.6.2"
 androidxComposeConstrainLayout = "1.0.1"
+kotlinCompilerExtension = "1.5.8"
 androidxNavigation = "2.7.7"
 androidxComposeBom = "2024.02.01"
 gson = "2.10.1"
@@ -19,11 +20,12 @@ material3 = "1.2.0"
 
 # pluggings versions
 androidGradlePlugin = "8.2.2"
-kotlinAndroid = "1.9.22"
+kotlin = "1.9.22"
 ksp = "1.9.22-1.0.17"
 junit-junit = "4.13.2"
 androidx-test-ext-junit = "1.1.5"
 espresso-core = "3.5.1"
+androidTools = "31.3.0"
 
 
 [libraries]
@@ -69,9 +71,25 @@ junit = { group = "junit", name = "junit", version.ref = "junit-junit" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 
+# Gradle Plugin
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "room" }
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+android-tools-common = { group = "com.android.tools", name = "common", version.ref = "androidTools" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlinAndroid" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "dagger" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 androidLibrary = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+room = { id = "androidx.room", version.ref = "room" }
+
+# Common Plugins
+common-android-application = { id = "gradlePlugins.android.application", version = "unspecified" }
+common-android-library = { id = "gradlePlugins.android.library", version = "unspecified" }
+common-android-application-compose = { id = "gradlePlugins.android.application.compose", version = "unspecified" }
+common-android-library-compose = { id = "gradlePlugins.android.library.compose", version = "unspecified" }
+common-android-hilt = { id = "gradlePlugins.android.hilt", version = "unspecified" }
+common-android-room = { id = "gradlePlugins.android.room", version = "unspecified" }

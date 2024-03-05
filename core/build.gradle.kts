@@ -1,26 +1,21 @@
 plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.common.android.library)
+    alias(libs.plugins.common.android.hilt)
+    alias(libs.plugins.common.android.room)
 }
 
 android {
     namespace = "com.jbm.module.core"
-    compileSdk = 34
 
     defaultConfig {
-        minSdk = 29
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
         externalNativeBuild {
             cmake {
                 cppFlags("")
             }
-        }
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -39,13 +34,6 @@ android {
             version = "3.22.1"
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
 }
 
 dependencies {
@@ -54,15 +42,6 @@ dependencies {
 
     // Androidx
     implementation(libs.androidx.media3.exoplayer)
-
-    // Room DB
-    implementation(libs.androidx.room.runtime)
-    annotationProcessor(libs.androidx.room.compiler)
-    ksp(libs.androidx.room.compiler)
-
-    // Data Injection
-    implementation(libs.dagger.hilt.android)
-    ksp(libs.dagger.hilt.compiler)
 
     // QA
     testImplementation(libs.junit.jupiter)

@@ -29,7 +29,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import com.jbm.module.core.model.VideoDomain
-import com.jbm.video.CustomExoPlayerView
+import com.jbm.video.ui.component.CustomExoPlayerView
 import dagger.hilt.EntryPoints
 
 /**
