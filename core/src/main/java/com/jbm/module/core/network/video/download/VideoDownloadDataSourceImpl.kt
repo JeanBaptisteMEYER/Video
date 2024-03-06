@@ -12,7 +12,7 @@ import androidx.media3.exoplayer.offline.DownloadHelper
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadService
 import com.jbm.module.core.data.di.DispatcherIO
-import com.jbm.module.core.model.VideoCacheState
+import com.jbm.module.core.data.model.VideoDTO
 import com.jbm.module.core.model.VideoDomain
 import com.jbm.module.core.model.VideoDownloadState
 import com.jbm.module.core.network.video.download.service.VideoDownloadService
@@ -31,6 +31,11 @@ class VideoDownloadDataSourceImpl @Inject constructor(
     @DispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : VideoDownloadDataSource {
 
+    companion object {
+        const val TITLE_KEY = "title"
+        const val ID_KEY = "id"
+    }
+
     /**
      * Download a given video. The video will then be accessible offline
      *
@@ -38,13 +43,13 @@ class VideoDownloadDataSourceImpl @Inject constructor(
      * @return [Flow] of [VideoDownloadState] representing the state of the download
      */
     @OptIn(UnstableApi::class)
-    override suspend fun downloadVideo(video: VideoDomain): Flow<VideoDownloadState> {
+    override suspend fun downloadVideo(video: VideoDTO): Flow<Int> {
         return withContext(dispatcherIO) {
             val mediaItem = MediaItem.Builder()
-                .setUri(video.videoUrl)
+                .setUri(video.videoUrl.firstOrNull())
                 .setMediaId(video.id)
                 .setTag(video)
-                .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(video.name).build())
+                .setMediaMetadata(MediaMetadata.Builder().setDisplayTitle(video.title).build())
                 .build()
 
             val helper = DownloadHelper.forMediaItem(appContext, mediaItem)
@@ -52,8 +57,8 @@ class VideoDownloadDataSourceImpl @Inject constructor(
                 override fun onPrepared(helper: DownloadHelper) {
                     val json = JSONObject()
                     //extra data about the download like title, artist e.tc below is an example
-                    json.put("id", mediaItem.mediaId)
-                    json.put("title", mediaItem.mediaMetadata.displayTitle)
+                    json.put(ID_KEY, mediaItem.mediaId)
+                    json.put(TITLE_KEY, mediaItem.mediaMetadata.displayTitle)
                     val download =
                         helper.getDownloadRequest(
                             mediaItem.mediaId,
@@ -82,35 +87,7 @@ class VideoDownloadDataSourceImpl @Inject constructor(
                         finalException: Exception?
                     ) {
                         super.onDownloadChanged(downloadManager, download, finalException)
-                        when (download.state) {
-                            Download.STATE_COMPLETED -> {
-                                trySend(VideoDownloadState.Completed(download.request.id))
-                            }
-
-                            Download.STATE_DOWNLOADING -> {
-                                trySend(VideoDownloadState.Downloading(download.request.id))
-                            }
-
-                            Download.STATE_FAILED -> {
-                                trySend(VideoDownloadState.Failed(download.request.id))
-                            }
-
-                            Download.STATE_QUEUED -> {
-                                trySend(VideoDownloadState.Queued(download.request.id))
-                            }
-
-                            Download.STATE_REMOVING -> {
-                                trySend(VideoDownloadState.Removing(download.request.id))
-                            }
-
-                            Download.STATE_RESTARTING -> {
-                                trySend(VideoDownloadState.Downloading(download.request.id))
-                            }
-
-                            Download.STATE_STOPPED -> {
-                                trySend(VideoDownloadState.Stopped(download.request.id))
-                            }
-                        }
+                        trySend(download.state)
                     }
                 }
 
@@ -121,7 +98,7 @@ class VideoDownloadDataSourceImpl @Inject constructor(
     }
 
     @OptIn(UnstableApi::class)
-    override suspend fun deleteDownloadedVideoById(videoId: String): Flow<VideoDownloadState> {
+    override suspend fun deleteDownloadedVideoById(videoId: String): Flow<Int> {
         return withContext(dispatcherIO) {
             DownloadService.sendRemoveDownload(
                 appContext,
@@ -138,35 +115,7 @@ class VideoDownloadDataSourceImpl @Inject constructor(
                         finalException: Exception?
                     ) {
                         super.onDownloadChanged(downloadManager, download, finalException)
-                        when (download.state) {
-                            Download.STATE_COMPLETED -> {
-                                trySend(VideoDownloadState.Completed(download.request.id))
-                            }
-
-                            Download.STATE_DOWNLOADING -> {
-                                trySend(VideoDownloadState.Downloading(download.request.id))
-                            }
-
-                            Download.STATE_FAILED -> {
-                                trySend(VideoDownloadState.Failed(download.request.id))
-                            }
-
-                            Download.STATE_QUEUED -> {
-                                trySend(VideoDownloadState.Queued(download.request.id))
-                            }
-
-                            Download.STATE_REMOVING -> {
-                                trySend(VideoDownloadState.Removing(download.request.id))
-                            }
-
-                            Download.STATE_RESTARTING -> {
-                                trySend(VideoDownloadState.Downloading(download.request.id))
-                            }
-
-                            Download.STATE_STOPPED -> {
-                                trySend(VideoDownloadState.Stopped(download.request.id))
-                            }
-                        }
+                        trySend(download.state)
                     }
                 }
 
@@ -188,10 +137,10 @@ class VideoDownloadDataSourceImpl @Inject constructor(
 
                 downloadedTracks.add(
                     VideoDomain(
-                        id = jsonObject.getString("id"),
-                        name = jsonObject.getString("title"),
+                        id = jsonObject.getString(ID_KEY),
+                        name = jsonObject.getString(TITLE_KEY),
                         videoUrl = uri.toString(),
-                        cacheState = VideoCacheState.Cached
+                        downloadState = VideoDownloadState.Completed
                     )
                 )
             } while (downloadCursor.moveToNext())

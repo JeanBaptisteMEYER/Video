@@ -1,11 +1,10 @@
 package com.jbm.video.ui.screen.video
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jbm.module.core.data.repository.VideoRepository
-import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
-import com.jbm.module.core.model.VideoDownloadState
 import com.jbm.video.ui.screen.video.model.VideoUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,8 +25,11 @@ class VideoViewModel @Inject constructor(
      * Get all videos from repository
      */
     fun getAllVideo() = viewModelScope.launch {
-        val videoList = videoRepository.getVideoLibrary()
-        updateUiState(VideoUiState.Success(videoList))
+        videoRepository.getVideoLibraryAsFlow()
+            .collect { videoList ->
+                Log.d("coucou", "NewVideoList: $videoList")
+                updateUiState(VideoUiState.Success(videoList))
+            }
     }
 
     /**
@@ -38,62 +40,12 @@ class VideoViewModel @Inject constructor(
     fun onVideoDownloadClick(video: VideoDomain) {
         viewModelScope.launch {
             videoRepository.downloadVideo(video = video)
-                .collect { videoDownloadState ->
-                    when (videoDownloadState) {
-                        is VideoDownloadState.Downloading -> {
-                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
-                                if (it.id == videoDownloadState.videoId) {
-                                    it.copy(cacheState = VideoCacheState.Caching)
-                                } else {
-                                    it
-                                }
-                            }?.let {
-                                updateUiState(VideoUiState.Success(it))
-                            }
-                        }
-
-                        is VideoDownloadState.Queued -> {
-                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
-                                if (it.id == videoDownloadState.videoId) {
-                                    it.copy(cacheState = VideoCacheState.Caching)
-                                } else {
-                                    it
-                                }
-                            }?.let {
-                                updateUiState(VideoUiState.Success(it))
-                            }
-                        }
-
-                        is VideoDownloadState.Completed -> {
-                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
-                                if (it.id == videoDownloadState.videoId) it.copy(cacheState = VideoCacheState.Cached) else it
-                            }?.let {
-                                updateUiState(VideoUiState.Success(it))
-                            }
-                        }
-
-                        else -> {}
-                    }
-                }
         }
     }
 
-    fun onVideoDeleteClick(videoId: String) {
+    fun onVideoDeleteClick(videoId: VideoDomain) {
         viewModelScope.launch {
             videoRepository.deleteDownloadedVideoById(videoId)
-                .collect { videoDownloadState ->
-                    when (videoDownloadState) {
-                        is VideoDownloadState.Removing -> {
-                            (uiState.value as? VideoUiState.Success)?.videoList?.map {
-                                if (it.id == videoDownloadState.videoId) it.copy(cacheState = VideoCacheState.NotCached) else it
-                            }?.let {
-                                updateUiState(VideoUiState.Success(it))
-                            }
-                        }
-
-                        else -> {}
-                    }
-                }
         }
     }
 

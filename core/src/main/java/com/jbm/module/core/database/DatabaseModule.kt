@@ -22,7 +22,8 @@ internal object DatabaseModule {
             appContext,
             VideoDatabase::class.java,
             "VideoDatabase"
-        ).build()
+        )
+            .build()
     }
 
     @Provides

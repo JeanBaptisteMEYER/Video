@@ -7,25 +7,27 @@ import com.google.gson.reflect.TypeToken
 import com.jbm.module.core.data.di.DispatcherIO
 import com.jbm.module.core.data.model.VideoDTO
 import com.jbm.module.core.data.model.VideoListDTO
-import com.jbm.module.core.model.VideoCacheState
-import com.jbm.module.core.model.VideoDomain
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import javax.inject.Inject
 
-class OfflineVideoLibraryDataSourceImpl @Inject constructor(
+class FakeVideoLibraryDataSourceImpl @Inject constructor(
     private val gson: Gson,
     private val assets: AssetManager,
     @DispatcherIO private val dispatcherIO: CoroutineDispatcher
 ) : VideoLibraryDataSource {
 
-    override suspend fun getVideoLibrary(): List<VideoDomain> {
+    companion object {
+        const val VIDEO_ASSET = "public_video_list.json"
+    }
+
+    override suspend fun getVideoLibrary(): List<VideoDTO> {
         return withContext(dispatcherIO) {
             // Read File
             val jsonString: String
             try {
-                jsonString = assets.open("public_video_list.json")
+                jsonString = assets.open(VIDEO_ASSET)
                     .bufferedReader()
                     .use { it.readText() }
             } catch (ioException: IOException) {
@@ -36,19 +38,13 @@ class OfflineVideoLibraryDataSourceImpl @Inject constructor(
             val videoListType = object : TypeToken<VideoListDTO>() {}.type
             val videoList: List<VideoDTO>
             try {
-                videoList = gson.fromJson<VideoListDTO>(jsonString, videoListType).videoList
+                videoList =
+                    gson.fromJson<VideoListDTO>(jsonString, videoListType).videoList
             } catch (jsonSyntaxException: JsonSyntaxException) {
                 return@withContext listOf()
             }
 
-            return@withContext videoList.mapIndexed { index, video ->
-                VideoDomain(
-                    id = (index + 1).toString(),
-                    name = video.title,
-                    videoUrl = video.videoUrl.first(),
-                    cacheState = VideoCacheState.NotCached
-                )
-            }
+            return@withContext videoList
         }
     }
 }

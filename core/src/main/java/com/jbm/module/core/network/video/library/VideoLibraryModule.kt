@@ -15,7 +15,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module
 class VideoDownloadModule {
-    @OfflineVideoLibrary
+    @FakeVideoLibrary
     @Provides
     @Singleton
     fun provideOfflineVideoLibraryDataSource(
@@ -23,7 +23,7 @@ class VideoDownloadModule {
         assets: AssetManager,
         @DispatcherIO dispatcherIO: CoroutineDispatcher
     ): VideoLibraryDataSource {
-        return OfflineVideoLibraryDataSourceImpl(
+        return FakeVideoLibraryDataSourceImpl(
             gson,
             assets,
             dispatcherIO
@@ -34,12 +34,10 @@ class VideoDownloadModule {
     @Singleton
     fun provideVideoLibraryDataSource(
         videoDownloadDataSource: VideoDownloadDataSource,
-        @OfflineVideoLibrary videoLibraryDataSource: VideoLibraryDataSource,
         @DispatcherIO dispatcherIO: CoroutineDispatcher
     ): VideoLibraryDataSource {
         return VideoLibraryDataSourceImpl(
             videoDownloadDataSource,
-            videoLibraryDataSource,
             dispatcherIO
         )
     }
@@ -47,4 +45,4 @@ class VideoDownloadModule {
 
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
-annotation class OfflineVideoLibrary
+annotation class FakeVideoLibrary

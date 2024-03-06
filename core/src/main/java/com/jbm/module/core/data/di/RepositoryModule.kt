@@ -4,6 +4,7 @@ import com.jbm.module.core.data.repository.VideoRepository
 import com.jbm.module.core.data.repository.VideoRepositoryImpl
 import com.jbm.module.core.database.dao.VideoDao
 import com.jbm.module.core.network.video.download.VideoDownloadDataSource
+import com.jbm.module.core.network.video.library.FakeVideoLibrary
 import com.jbm.module.core.network.video.library.VideoLibraryDataSource
 import dagger.Module
 import dagger.Provides
@@ -17,7 +18,7 @@ class RepositoryModule {
     @Provides
     fun provideVideoRepository(
         videoDao: VideoDao,
-        videoLibraryDataSource: VideoLibraryDataSource,
+        @FakeVideoLibrary videoLibraryDataSource: VideoLibraryDataSource,
         videoDownloadDataSource: VideoDownloadDataSource,
         @DispatcherIO dispatcherIO: CoroutineDispatcher
     ): VideoRepository = VideoRepositoryImpl(

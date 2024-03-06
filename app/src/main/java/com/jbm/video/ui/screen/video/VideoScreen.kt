@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jbm.module.core.model.VideoCacheState
 import com.jbm.module.core.model.VideoDomain
+import com.jbm.module.core.model.VideoDownloadState
 import com.jbm.video.R
 import com.jbm.video.ui.screen.video.model.VideoUiState
 
@@ -90,7 +90,7 @@ fun VideoScreen(
     onPlayingVideoIndexChange: (Int) -> Unit,
     isVideoEnded: (Boolean) -> Unit,
     onVideoDownloadClick: (VideoDomain) -> Unit,
-    onVideoDeleteClick: (String) -> Unit
+    onVideoDeleteClick: (VideoDomain) -> Unit
 ) {
     val videoPlaylistState = remember { mutableStateOf(videoPlaylist) }
 
@@ -120,7 +120,7 @@ fun VideoPlaylist(
     playingVideoIndex: State<Int>,
     onPlayingVideoIndexChange: (Int) -> Unit,
     onVideoDownloadClick: (VideoDomain) -> Unit,
-    onVideoDeleteClick: (String) -> Unit
+    onVideoDeleteClick: (VideoDomain) -> Unit
 ) {
     LazyColumn {
         itemsIndexed(videoPlaylist) { index, video ->
@@ -144,7 +144,7 @@ fun VideoPlaylistItem(
     playingVideoIndex: State<Int>,
     onPlayingVideoIndexChange: (Int) -> Unit,
     onVideoDownloadClick: (VideoDomain) -> Unit,
-    onVideoDeleteClick: (String) -> Unit
+    onVideoDeleteClick: (VideoDomain) -> Unit
 ) {
     val currentlyPlaying = remember { mutableStateOf(false) }
 
@@ -207,13 +207,13 @@ fun DownloadIcon(
     modifier: Modifier = Modifier,
     video: VideoDomain,
     onVideoDownloadClick: (VideoDomain) -> Unit,
-    onVideoDeleteClick: (String) -> Unit
+    onVideoDeleteClick: (VideoDomain) -> Unit
 ) {
-    when (video.cacheState) {
-        VideoCacheState.Cached -> {
+    when (video.downloadState) {
+        VideoDownloadState.Completed -> {
             IconButton(
                 modifier = Modifier.then(modifier),
-                onClick = { onVideoDeleteClick(video.id) }
+                onClick = { onVideoDeleteClick(video) }
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Favorite,
@@ -225,7 +225,7 @@ fun DownloadIcon(
             }
         }
 
-        VideoCacheState.NotCached -> {
+        VideoDownloadState.Unknown -> {
             IconButton(
                 modifier = Modifier.then(modifier),
                 onClick = { onVideoDownloadClick(video) }
@@ -240,7 +240,7 @@ fun DownloadIcon(
             }
         }
 
-        VideoCacheState.Caching -> {
+        else -> {
             Box(
                 modifier = Modifier
                     .then(modifier),
@@ -269,31 +269,31 @@ fun VideoPlaylistPreview() {
                 id = "1",
                 name = "VideoName 1",
                 videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                cacheState = VideoCacheState.NotCached
+                downloadState = VideoDownloadState.Downloading
             ),
             VideoDomain(
                 id = "2",
                 name = "VideoName 2",
                 videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                cacheState = VideoCacheState.NotCached
+                downloadState = VideoDownloadState.Downloading
             ),
             VideoDomain(
                 id = "3",
                 name = "VideoName 3",
                 videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                cacheState = VideoCacheState.NotCached
+                downloadState = VideoDownloadState.Downloading
             ),
             VideoDomain(
                 id = "4",
                 name = "VideoName 4",
                 videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                cacheState = VideoCacheState.NotCached
+                downloadState = VideoDownloadState.Downloading
             ),
             VideoDomain(
                 id = "5",
                 name = "VideoName 5",
                 videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                cacheState = VideoCacheState.NotCached
+                downloadState = VideoDownloadState.Downloading
             ),
         ),
         playingVideoIndex = playingVideoIndex,
