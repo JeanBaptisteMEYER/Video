@@ -17,6 +17,7 @@ junit = "5.8.1"
 kotlinxCoroutines = "1.7.3"
 exoPlayer = "1.2.1"
 material3 = "1.2.0"
+kotlinxDatetime = "0.5.0"
 
 # pluggings versions
 androidGradlePlugin = "8.2.2"
@@ -47,8 +48,9 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
 
-# Network
+# Utils
 google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 
 # Database
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }

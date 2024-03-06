@@ -1,12 +1,11 @@
-package com.jbm.module.core.data.repository
+package com.jbm.module.core.network.video.download
 
 import com.jbm.module.core.model.VideoDomain
 import com.jbm.module.core.model.VideoDownloadState
 import kotlinx.coroutines.flow.Flow
 
-interface VideoRepository {
-    suspend fun getVideoLibrary(): List<VideoDomain>
-    suspend fun getVideoById(id: String): VideoDomain
+interface VideoDownloadDataSource {
     suspend fun downloadVideo(video: VideoDomain): Flow<VideoDownloadState>
     suspend fun deleteDownloadedVideoById(videoId: String): Flow<VideoDownloadState>
+    suspend fun getDownloadedVideoList(): List<VideoDomain>
 }

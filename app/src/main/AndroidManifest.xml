@@ -31,7 +31,7 @@
 
 
         <service
-            android:name="com.jbm.module.core.video.VideoDownloadService"
+            android:name="com.jbm.module.core.network.video.download.service.VideoDownloadService"
             android:foregroundServiceType="dataSync"
             android:enabled="true"
             android:exported="true"

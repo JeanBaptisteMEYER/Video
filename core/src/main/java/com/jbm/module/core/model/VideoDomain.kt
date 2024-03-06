@@ -1,8 +1,5 @@
 package com.jbm.module.core.model
 
-const val EXAMPLE_VIDEO_URI =
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-
 data class VideoDomain(
     val id: String,
     val name: String,

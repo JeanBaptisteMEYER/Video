@@ -1,4 +1,4 @@
-package com.jbm.module.core.video
+package com.jbm.module.core.network.video.download.service
 
 import android.app.Notification
 import androidx.annotation.OptIn
@@ -9,7 +9,7 @@ import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.Scheduler
 import com.jbm.module.core.R
-import com.jbm.module.core.video.di.VideoDownloadServiceEntryPoint
+import com.jbm.module.core.network.video.download.VideoDownloadServiceEntryPoint
 import dagger.hilt.EntryPoints
 import javax.inject.Inject
 

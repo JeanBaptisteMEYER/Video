@@ -3,7 +3,7 @@ package com.jbm.video
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import com.jbm.module.core.video.VideoDownloadService
+import com.jbm.module.core.network.video.download.service.VideoDownloadService
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp

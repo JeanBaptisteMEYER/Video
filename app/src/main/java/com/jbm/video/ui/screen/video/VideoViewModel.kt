@@ -1,6 +1,5 @@
 package com.jbm.video.ui.screen.video
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jbm.module.core.data.repository.VideoRepository
@@ -27,13 +26,8 @@ class VideoViewModel @Inject constructor(
      * Get all videos from repository
      */
     fun getAllVideo() = viewModelScope.launch {
-        videoRepository.getAllVideos()
-            .onSuccess { videoList ->
-                updateUiState(VideoUiState.Success(videoList))
-            }
-            .onFailure {
-                Log.d("coucou", "VideoList Not Found: ")
-            }
+        val videoList = videoRepository.getVideoLibrary()
+        updateUiState(VideoUiState.Success(videoList))
     }
 
     /**

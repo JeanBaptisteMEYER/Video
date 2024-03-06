@@ -1,15 +1,13 @@
 package com.jbm.module.core.data.di
 
-import android.content.Context
-import android.content.res.AssetManager
-import androidx.media3.exoplayer.offline.DownloadManager
-import com.google.gson.Gson
 import com.jbm.module.core.data.repository.VideoRepository
 import com.jbm.module.core.data.repository.VideoRepositoryImpl
+import com.jbm.module.core.database.dao.VideoDao
+import com.jbm.module.core.network.video.download.VideoDownloadDataSource
+import com.jbm.module.core.network.video.library.VideoLibraryDataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -18,16 +16,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 class RepositoryModule {
     @Provides
     fun provideVideoRepository(
-        @ApplicationContext appContext: Context,
-        gson: Gson,
-        assets: AssetManager,
-        downloadManager: DownloadManager,
+        videoDao: VideoDao,
+        videoLibraryDataSource: VideoLibraryDataSource,
+        videoDownloadDataSource: VideoDownloadDataSource,
         @DispatcherIO dispatcherIO: CoroutineDispatcher
     ): VideoRepository = VideoRepositoryImpl(
-        appContext,
-        gson,
-        assets,
-        downloadManager,
+        videoDao,
+        videoLibraryDataSource,
+        videoDownloadDataSource,
         dispatcherIO
     )
 }

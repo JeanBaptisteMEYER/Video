@@ -29,6 +29,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import com.jbm.module.core.model.VideoDomain
+import com.jbm.module.core.network.video.download.VideoPlayerEntryPoint
 import com.jbm.video.ui.component.CustomExoPlayerView
 import dagger.hilt.EntryPoints
 
@@ -63,7 +64,7 @@ fun VideoPlayer(
     val context = LocalContext.current
     val cacheDataSourceFactory = EntryPoints.get(
         context.applicationContext,
-        com.jbm.module.core.video.di.VideoPlayerEntryPoint::class.java
+        VideoPlayerEntryPoint::class.java
     ).getCacheDataSource()
 
     // Create a list of MediaItems for the ExoPlayer
